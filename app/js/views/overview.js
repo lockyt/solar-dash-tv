@@ -88,14 +88,49 @@
   }
 
   // Direction: toward hub = 'in', away = 'out'. Speed scales with power.
+  /*
+   * Flow dots: a CSS stroke-dashoffset animation keeps the old webOS renderer
+   * at ~90% CPU, which also delays the app's own timers. Instead we step the
+   * offset ourselves at 4 fps, only while the overview is on screen.
+   */
+  var DASH = 27;       // matches stroke-dasharray 1 26
+  var FPS = 4;
+  var flows = [];      // { line, speed (px/s, signed), offset }
+  var flowTimer = null;
+  var flowVisible = false;
+
+  function flowFor(line) {
+    for (var i = 0; i < flows.length; i++) { if (flows[i].line === line) { return flows[i]; } }
+    var f = { line: line, speed: 0, offset: 0 };
+    flows.push(f);
+    return f;
+  }
+
+  function stepFlows() {
+    if (!flowVisible || document.hidden || document.webkitHidden || document.body.classList.contains('dimmed')) { return; }
+    for (var i = 0; i < flows.length; i++) {
+      var f = flows[i];
+      if (!f.speed) { continue; }
+      f.offset = (f.offset - f.speed / FPS) % DASH;
+      if (f.offset < 0) { f.offset += DASH; }
+      f.line.setAttribute('stroke-dashoffset', f.offset.toFixed(1));
+    }
+  }
+
+  function setFlowRunning(on) {
+    flowVisible = on;
+    if (on && !flowTimer) { flowTimer = setInterval(stepFlows, 1000 / FPS); }
+    if (!on && flowTimer) { clearInterval(flowTimer); flowTimer = null; }
+  }
+
   function setFlow(line, kw, dirIn) {
     var a = U.isNum(kw) ? Math.abs(kw) : 0;
-    if (a < 0.05) { line.setAttribute('class', line.getAttribute('class').replace(/ ?(active|rev)/g, '')); return; }
-    var cls = line.getAttribute('class').replace(/ ?(active|rev)/g, '') + ' active' + (dirIn ? '' : ' rev');
-    line.setAttribute('class', cls);
-    var dur = U.clamp(2.6 - Math.log(1 + a) * 0.9, 0.45, 2.6);
-    line.style.webkitAnimationDuration = dur + 's';
-    line.style.animationDuration = dur + 's';
+    var f = flowFor(line);
+    var base = line.getAttribute('class').replace(/ ?active/g, '');
+    if (a < 0.05) { line.setAttribute('class', base); f.speed = 0; return; }
+    line.setAttribute('class', base + ' active');
+    var secsPerDash = U.clamp(2.6 - Math.log(1 + a) * 0.9, 0.45, 2.6);
+    f.speed = (DASH / secsPerDash) * (dirIn ? 1 : -1); // + moves dots along the path toward the hub
     line.style.strokeWidth = U.clamp(4 + a * 1.1, 4, 14) + 'px';
   }
 
@@ -277,7 +312,8 @@
   SD.views.overview = {
     title: 'Overview',
     build: build,
-    onShow: render,
+    onShow: function () { render(); setFlowRunning(true); },
+    onHide: function () { setFlowRunning(false); },
     onUpdate: function (key) {
       if (key === 'live' || key === 'device' || key === 'soc') { renderLive(); }
       if (key === 'price') { renderPrice(); }

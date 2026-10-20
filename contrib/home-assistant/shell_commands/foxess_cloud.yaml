@@ -1,0 +1,2 @@
+# FoxESS Cloud scheduler control (see /config/foxess_cloud/clear_schedule.py)
+foxess_clear_schedule: "python3 /config/foxess_cloud/clear_schedule.py"

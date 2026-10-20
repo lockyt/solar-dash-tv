@@ -25,5 +25,5 @@ bind('foxess', proxy.foxess);
 bind('amber', proxy.amber);
 
 service.register('ping', function (message) {
-  message.respond({ returnValue: true, version: '0.2.8', node: process.version });
+  message.respond({ returnValue: true, version: '0.2.9', node: process.version });
 });

@@ -233,6 +233,20 @@
     return fallback;
   }
 
+  // Safety net: if live data hasn't refreshed for a long time while we're
+  // supposedly running, restart all the polling loops.
+  var watchdog = null;
+  function startWatchdog() {
+    clearInterval(watchdog);
+    watchdog = setInterval(function () {
+      if (!running || SD.isDemo()) { return; }
+      var limit = Math.max(3 * ((cadence.value || 300000)), 15 * 60000);
+      if (S.updated.live && Date.now() - S.updated.live > limit) {
+        SD.data.start();
+      }
+    }, 60000);
+  }
+
   function liveLoop() {
     if (!running) { return; }
     loadLive(function (changed) {
@@ -341,6 +355,7 @@
       loadDevice(function () {
         loadSocSettings(function () {
           liveLoop();
+          startWatchdog();
           every('today', 10 * 60000, loadToday);
         });
       });
@@ -350,6 +365,7 @@
     },
     stop: function () {
       running = false;
+      clearInterval(watchdog);
       for (var k in timers) { if (timers.hasOwnProperty(k)) { clearTimeout(timers[k]); } }
       timers = {};
     },

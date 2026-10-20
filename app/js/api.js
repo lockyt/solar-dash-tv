@@ -21,11 +21,26 @@
   var bridges = {};
   var bridgeSeq = 0;
 
+  // If the TV kills our service mid-request (it does under memory pressure), the
+  // reply never comes; time out so the FoxESS queue and polling loops keep going.
+  var LUNA_TIMEOUT_MS = 45000;
+
   function callLuna(method, params, cb) {
     var id = ++bridgeSeq;
+    var done = false;
     var bridge = new window.PalmServiceBridge();
     bridges[id] = bridge; // keep a reference until the reply arrives
+    var timer = setTimeout(function () {
+      if (done) { return; }
+      done = true;
+      delete bridges[id];
+      try { bridge.cancel(); } catch (e) { /* ignore */ }
+      cb(new Error('Background service did not reply'));
+    }, LUNA_TIMEOUT_MS);
     bridge.onservicecallback = function (msg) {
+      if (done) { return; }
+      done = true;
+      clearTimeout(timer);
       delete bridges[id];
       var res;
       try { res = JSON.parse(msg); } catch (e) { return cb(new Error('Bad service reply')); }

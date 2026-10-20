@@ -111,10 +111,8 @@ body.dimmed #stage { opacity: 0.22; }
 /* energy-flow svg */
 .link-base { stroke: #18212c; stroke-width: 6; fill: none; stroke-linecap: round; }
 .link-flow { fill: none; stroke-linecap: round; stroke-dasharray: 1 26; stroke-width: 8; opacity: 0; }
-.link-flow.active { opacity: 1; -webkit-animation: flow 1.5s linear infinite; animation: flow 1.5s linear infinite; }
-.link-flow.rev { -webkit-animation-direction: reverse; animation-direction: reverse; }
-@-webkit-keyframes flow { from { stroke-dashoffset: 27; } to { stroke-dashoffset: 0; } }
-@keyframes flow { from { stroke-dashoffset: 27; } to { stroke-dashoffset: 0; } }
+/* Moved by a 4 fps JS timer, not a CSS animation: continuous SVG animation costs ~90% CPU on webOS 3.5 */
+.link-flow.active { opacity: 1; }
 .link-flow.c-solar { stroke: #f5b82e; } .link-flow.c-home { stroke: #4fa3ff; } .link-flow.c-grid { stroke: #ff6b6b; }
 .link-flow.c-export { stroke: #b48cff; } .link-flow.c-battery { stroke: #3ddc97; }
 .hub { fill: #0f1720; stroke: #2a3644; stroke-width: 3; }

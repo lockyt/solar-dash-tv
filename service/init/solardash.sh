@@ -23,6 +23,7 @@ for p in $(ps -e -o pid,args 2>/dev/null | grep "[s]olardash.tv.service/daemon.j
 sleep 1
 
 (
+    trap '' HUP # keep running if started from an SSH session that later closes
     while [ "$(cat "$TOKENFILE" 2>/dev/null)" = "$TOKEN" ] && [ -f "$D/daemon.js" ]; do
         [ -f "$LOG" ] && [ "$(wc -c < "$LOG")" -gt 200000 ] && tail -c 50000 "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"
         /usr/bin/node "$D/daemon.js" >> "$LOG" 2>&1

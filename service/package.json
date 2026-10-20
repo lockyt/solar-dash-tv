@@ -1,6 +1,6 @@
 {
   "name": "com.solardash.tv.service",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "Solar Dash background service: signs and forwards FoxESS Cloud and Amber API requests",
   "main": "index.js",
   "license": "MIT"

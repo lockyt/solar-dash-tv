@@ -1,0 +1,21 @@
+- id: foxess_clear_cloud_schedule_midnight
+  alias: "FoxESS: clear cloud battery schedule at midnight"
+  description: >-
+    Turns off the FoxESS Cloud scheduler every night so a Solar Dash (TV) force
+    charge/discharge override can't repeat the next day if the TV was off when
+    it ended. Doesn't affect PowerSync, which controls the inverter over Modbus.
+  trigger:
+    - platform: time
+      at: "00:00:00"
+  action:
+    - service: shell_command.foxess_clear_schedule
+      response_variable: result
+    - if:
+        - condition: template
+          value_template: "{{ result.returncode != 0 }}"
+      then:
+        - service: persistent_notification.create
+          data:
+            title: "FoxESS schedule clear failed"
+            message: "{{ result.stdout }} {{ result.stderr }}"
+  mode: single

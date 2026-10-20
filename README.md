@@ -134,6 +134,30 @@ FoxESS Cloud has no "do this once" command. Overrides use the inverter's **sched
 
 With the background service installed, the restore happens on time even when the app is closed. Without it, the restore happens only while the app is running, or the next time it opens. Until then the segment stays on the inverter and **will run again the next day at the same time**.
 
+## Limitations of FoxESS Cloud scheduling
+
+Battery controls go through the FoxESS Cloud Open API, which is the only control
+path that works for every FoxESS model without extra hardware. It has real limits:
+
+- **Overrides repeat daily.** There's no "do this once" command, only scheduler
+  segments that run every day. The inverter enforces the stop level (e.g. 15%) and
+  the end time itself, but the segment stays and **runs again the next day** until
+  something removes it.
+- **Cleanup needs something awake.** Solar Dash's background service removes
+  expired overrides, but with Quick Start+ on, an LG TV that's "off" is frozen in
+  standby. If the TV is off when an override ends, it repeats daily until the TV
+  is turned on again. Fix: clear the scheduler nightly from an always-on system;
+  see [contrib/home-assistant](contrib/home-assistant/).
+- **Delays.** Commands take a minute or two to reach the inverter, and FoxESS Cloud
+  only receives new data every few minutes, so the dashboard lags what the
+  inverter is actually doing.
+- **Conflicts with local controllers.** If something else controls the inverter
+  locally over Modbus (e.g. PowerSync, `foxess_modbus` automations), it can
+  override or fight a Solar Dash override. Use one controller at a time.
+- **Replaces your own schedule during an override.** Solar Dash backs up any
+  existing FoxESS schedule and restores it afterwards, subject to the cleanup
+  limitation above.
+
 ## Data freshness and API limits
 
 FoxESS Cloud only receives new data from the inverter every few minutes (every 5 minutes on an H3 Smart). Solar Dash learns that rhythm and checks about 20 seconds after each expected update, and the header shows how old the inverter data is.

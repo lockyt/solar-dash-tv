@@ -145,6 +145,22 @@
     ssBridge = null;
   }
 
+  /*
+   * Rooted TVs: the Homebrew Channel's own boot hook doesn't always fire on webOS 3.x,
+   * which leaves update blocking, SSH and our notification service off after a reboot.
+   * Asking it to run its startup on every launch (as its own app does) fixes that;
+   * it does nothing if startup already ran this boot, or if the TV isn't rooted.
+   */
+  function runRootStartup() {
+    if (!window.PalmServiceBridge) { return; }
+    try {
+      var b = new window.PalmServiceBridge();
+      SD.rootStartupBridge = b;
+      b.onservicecallback = function (msg) { SD.rootStartupReply = msg; };
+      b.call('luna://org.webosbrew.hbchannel.service/autostart', '{}');
+    } catch (e) { /* not rooted */ }
+  }
+
   // ---------- keys ----------
   function onKey(e) {
     lastInput = Date.now();
@@ -219,6 +235,7 @@
     wake();
     SD.data.start();
     startScreensaverControl();
+    runRootStartup();
     SD.on('settings', function () { stopScreensaverControl(); startScreensaverControl(); });
     SD.daemon.pushConfig();
     SD.on('settings', function () { SD.daemon.pushConfig(); });

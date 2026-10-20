@@ -20,7 +20,7 @@ var execFile = require('child_process').execFile;
 var proxy = require('./lib/proxy');
 var bands = require('./lib/bands'); // copied from app/js/bands.js at package time
 
-var VERSION = '0.2.8';
+var VERSION = '0.2.9';
 var PORT = 8643;
 var APP_ID = 'com.solardash.tv';
 var DIR = process.env.SOLARDASH_DIR || '/home/root/.solardash';
