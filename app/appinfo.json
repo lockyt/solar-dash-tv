@@ -1,0 +1,15 @@
+{
+  "id": "com.solardash.tv",
+  "version": "0.2.7",
+  "vendor": "Solar Dash",
+  "type": "web",
+  "main": "index.html",
+  "title": "Solar Dash",
+  "icon": "img/icon.png",
+  "largeIcon": "img/largeIcon.png",
+  "bgColor": "#0b0f14",
+  "iconColor": "#0b0f14",
+  "resolution": "1920x1080",
+  "disableBackHistoryAPI": true,
+  "requiredACG": []
+}

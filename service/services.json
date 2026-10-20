@@ -1,0 +1,10 @@
+{
+  "id": "com.solardash.tv.service",
+  "description": "Solar Dash API proxy",
+  "services": [
+    {
+      "name": "com.solardash.tv.service",
+      "description": "Signs and forwards FoxESS Cloud and Amber API requests"
+    }
+  ]
+}
