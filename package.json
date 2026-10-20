@@ -1,6 +1,6 @@
 {
   "name": "solar-dash-tv",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "private": true,
   "description": "FoxESS + Amber energy dashboard and battery controls for LG webOS TVs",
   "license": "MIT",
@@ -8,7 +8,7 @@
     "dev": "node dev/server.js",
     "icons": "python3 tools/gen-icons.py",
     "package": "cp app/js/bands.js service/lib/bands.js && ares-package app service -o dist",
-    "install-tv": "ares-install dist/com.solardash.tv_0.2.7_all.ipk"
+    "install-tv": "ares-install dist/com.solardash.tv_0.2.8_all.ipk"
   },
   "devDependencies": {
     "@webos-tools/cli": "3.2.6"

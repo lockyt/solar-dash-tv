@@ -20,7 +20,7 @@ var execFile = require('child_process').execFile;
 var proxy = require('./lib/proxy');
 var bands = require('./lib/bands'); // copied from app/js/bands.js at package time
 
-var VERSION = '0.2.7';
+var VERSION = '0.2.8';
 var PORT = 8643;
 var APP_ID = 'com.solardash.tv';
 var DIR = process.env.SOLARDASH_DIR || '/home/root/.solardash';
@@ -46,7 +46,7 @@ var state = {
   priceError: null,
   live: null,
   liveAt: 0,
-  lastToastAt: 0,
+  lastToastAt: Date.now(), // don't notify just because the daemon (re)started
   lastToastBuy: null,
   lastSpikeStatus: 'none',
   lastToast: null,
@@ -206,6 +206,7 @@ function pollPrice() {
         p.sell = -it.perKwh; // Amber feed-in is negative when you get paid
       }
     });
+    if (state.lastToastBuy == null) { state.lastToastBuy = p.buy; } // baseline for 'price moves'
     state.price = p;
     state.priceAt = Date.now();
     state.priceError = null;
