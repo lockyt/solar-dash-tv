@@ -1,6 +1,6 @@
 {
   "id": "com.solardash.tv",
-  "version": "0.2.9",
+  "version": "0.3.0",
   "vendor": "Solar Dash",
   "type": "web",
   "main": "index.html",

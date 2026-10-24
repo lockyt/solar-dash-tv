@@ -129,7 +129,6 @@ var SD = window.SD = {};
     dimMinutes: 15,          // dim after N idle minutes (0 = off)
     tvScreensaverMin: 3,     // let LG's screensaver start after N idle minutes (1 = TV default)
     referenceCents: 32,      // typical retail buy price for comparison (c/kWh)
-    tickerEnabled: true,     // background price notifications (rooted TVs, needs the daemon)
     tickerInterval: 15,      // minutes between notifications (0 = only on change/spike)
     tickerChange: 5,         // notify when buy price moves by this many c/kWh (0 = off)
     tickerSpikes: true,

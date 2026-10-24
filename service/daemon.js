@@ -20,7 +20,7 @@ var execFile = require('child_process').execFile;
 var proxy = require('./lib/proxy');
 var bands = require('./lib/bands'); // copied from app/js/bands.js at package time
 
-var VERSION = '0.2.9';
+var VERSION = '0.3.0';
 var PORT = 8643;
 var APP_ID = 'com.solardash.tv';
 var DIR = process.env.SOLARDASH_DIR || '/home/root/.solardash';
@@ -29,7 +29,7 @@ var OVERRIDE_FILE = path.join(DIR, 'override.json');
 var LUNA_SEND = process.env.LUNA_SEND || '/usr/bin/luna-send';
 
 var DEFAULT_TICKER = {
-  enabled: true,
+  enabled: false,
   intervalMin: 15,     // 0 = no timed notifications
   changeCents: 5,      // 0 = ignore price moves
   spikes: true,
@@ -70,11 +70,25 @@ function writeJson(file, value) {
     fs.writeFileSync(file, JSON.stringify(value), { mode: 384 }); // 0600: contains API keys
   } catch (e) { log('write failed ' + file + ': ' + e.message); }
 }
+// On/off is deliberately NOT saved: notifications always start Off after the TV
+// or this service restarts, and only the app's switch turns them on.
+var tickerOn = false;
 function ticker() {
   var t = config.ticker || {};
   var out = {};
   for (var k in DEFAULT_TICKER) { if (DEFAULT_TICKER.hasOwnProperty(k)) { out[k] = t[k] != null ? t[k] : DEFAULT_TICKER[k]; } }
+  out.enabled = tickerOn;
   return out;
+}
+function stripEnabled(t) {
+  var out = {};
+  for (var k in (t || {})) { if (k !== 'enabled' && t.hasOwnProperty(k)) { out[k] = t[k]; } }
+  return out;
+}
+function setTickerOn(on) {
+  tickerOn = !!on;
+  if (!tickerOn) { stopHold(); }
+  log('notifications ' + (tickerOn ? 'on' : 'off'));
 }
 function cents(c) {
   if (typeof c !== 'number' || !isFinite(c)) { return '--'; }
@@ -131,7 +145,7 @@ function startHold(reason, opts) {
   hold.until = holdSec < 0 ? Infinity : Date.now() + Math.max(5, holdSec) * 1000;
   if (hold.timer) { return; } // already running; just extended
   (function tick() {
-    if (Date.now() >= hold.until || !ticker().enabled) { hold.timer = null; return; }
+    if (Date.now() >= hold.until || (!ticker().enabled && hold.reason !== 'test')) { hold.timer = null; return; }
     hold.timer = 'pending'; // keep startHold() from starting a second loop
     // Never re-send while the screensaver (or standby) is up: a new toast would wake the screen.
     luna('luna://com.webos.service.tvpower/power/getPowerState', {}, function (err, pw) {
@@ -325,9 +339,10 @@ var server = http.createServer(function (req, res) {
       var amberChanged = body.amberToken !== config.amberToken || body.amberSiteId !== config.amberSiteId;
       config = {
         foxApiKey: body.foxApiKey || '', foxBaseUrl: body.foxBaseUrl || '', foxSn: body.foxSn || '',
-        amberToken: body.amberToken || '', amberSiteId: body.amberSiteId || '', ticker: body.ticker || {},
+        amberToken: body.amberToken || '', amberSiteId: body.amberSiteId || '', ticker: stripEnabled(body.ticker),
         referenceCents: Number(body.referenceCents) || bands.DEFAULT_REFERENCE
       };
+      if (body.ticker && typeof body.ticker.enabled === 'boolean') { setTickerOn(body.ticker.enabled); }
       writeJson(CONFIG_FILE, config);
       if (amberChanged) { state.priceStatsDay = null; pollPrice(); loadPriceHistory(); }
       send(res, 200, { ok: true });
@@ -339,6 +354,13 @@ var server = http.createServer(function (req, res) {
       override = body && body.until ? body : null;
       writeJson(OVERRIDE_FILE, override);
       send(res, 200, { ok: true });
+    });
+  }
+  if (url === '/notifications' && req.method === 'POST') {
+    return readBody(req, function (err, b) {
+      if (err || !b) { return send(res, 400, { ok: false, error: 'Bad JSON' }); }
+      setTickerOn(b.enabled);
+      send(res, 200, { ok: true, enabled: tickerOn });
     });
   }
   if (url === '/quit' && req.method === 'POST') {

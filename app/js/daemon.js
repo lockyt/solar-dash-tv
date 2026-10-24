@@ -40,10 +40,11 @@
     b.call('luna://org.webosbrew.hbchannel.service/exec', JSON.stringify({ command: command }));
   }
 
+  // On/off isn't part of this: it's held by the service and starts Off after every restart
   function tickerConfig() {
     var s = SD.settings;
     return {
-      enabled: !!s.tickerEnabled, intervalMin: Number(s.tickerInterval) || 0,
+      intervalMin: Number(s.tickerInterval) || 0,
       changeCents: Number(s.tickerChange) || 0, spikes: !!s.tickerSpikes, fields: s.tickerFields || 'price',
       holdSec: Number(s.tickerHoldSec) || 30
     };
@@ -51,6 +52,7 @@
 
   SD.daemon = {
     status: function (cb) { req('GET', '/status', null, cb); },
+    setNotifications: function (on, cb) { req('POST', '/notifications', { enabled: !!on }, cb); },
     test: function (opts, cb) { req('POST', '/test', opts || {}, cb); },
 
     pushConfig: function (cb) {

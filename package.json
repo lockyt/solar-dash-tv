@@ -1,6 +1,6 @@
 {
   "name": "solar-dash-tv",
-  "version": "0.2.9",
+  "version": "0.3.0",
   "private": true,
   "description": "FoxESS + Amber energy dashboard and battery controls for LG webOS TVs",
   "license": "MIT",

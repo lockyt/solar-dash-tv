@@ -91,24 +91,40 @@
         SD.toast(err ? err.message : 'Test notification sent', err ? 'error' : 'ok');
       });
     });
+    // Everything in this card applies straight away (no Save needed)
+    function apply(key) {
+      return function (v) {
+        draft[key] = v;
+        SD.settings[key] = v;
+        SD.store.save('solardash.settings.v1', SD.settings);
+        SD.daemon.pushConfig();
+      };
+    }
+    el.notifSwitch = SD.stepper({ label: 'Notifications', values: [{ value: false, label: 'Off' }, { value: true, label: 'On' }], value: false,
+      hint: 'Always starts Off after the TV restarts',
+      onChange: function (v) {
+        SD.daemon.setNotifications(v, function (err) {
+          SD.toast(err ? err.message : (v ? 'Price notifications on' : 'Price notifications off'), err ? 'error' : 'ok');
+        });
+      } });
     return section('TV notifications', [
-      SD.stepper({ label: 'Notifications', values: [{ value: true, label: 'On' }, { value: false, label: 'Off' }], value: draft.tickerEnabled,
-        onChange: function (v) { draft.tickerEnabled = v; } }),
+      U.h('p', { 'class': 'field-hint card-hint', text: 'Changes here apply immediately.' }),
+      el.notifSwitch,
       SD.stepper({ label: 'Every', values: [{ value: 0, label: 'Only on change' }, { value: 5, label: '5 min' }, { value: 10, label: '10 min' },
         { value: 15, label: '15 min' }, { value: 30, label: '30 min' }, { value: 60, label: '60 min' }], value: draft.tickerInterval,
-        onChange: function (v) { draft.tickerInterval = v; } }),
+        onChange: apply('tickerInterval') }),
       SD.stepper({ label: 'Price moves', values: [{ value: 0, label: 'Ignore' }, { value: 2, label: '\u00b1 2c' }, { value: 5, label: '\u00b1 5c' },
         { value: 10, label: '\u00b1 10c' }, { value: 20, label: '\u00b1 20c' }], value: draft.tickerChange,
-        onChange: function (v) { draft.tickerChange = v; } }),
+        onChange: apply('tickerChange') }),
       SD.stepper({ label: 'Keep on screen', values: [{ value: 5, label: '5 s' }, { value: 15, label: '15 s' }, { value: 30, label: '30 s' },
         { value: 60, label: '1 min' }, { value: -1, label: 'Always' }], value: draft.tickerHoldSec,
         hint: 'LG fixes the position (top right). "Always" keeps a static box on an OLED - burn-in risk.',
-        onChange: function (v) { draft.tickerHoldSec = v; } }),
+        onChange: apply('tickerHoldSec') }),
       SD.stepper({ label: 'Spike alerts', values: [{ value: true, label: 'On' }, { value: false, label: 'Off' }], value: draft.tickerSpikes,
-        onChange: function (v) { draft.tickerSpikes = v; } }),
+        onChange: apply('tickerSpikes') }),
       SD.stepper({ label: 'Show', values: [{ value: 'price', label: 'Buy + sell' }, { value: 'price-soc', label: '+ battery %' },
         { value: 'price-soc-solar', label: '+ battery % + solar' }, { value: 'all', label: 'Everything' }], value: draft.tickerFields,
-        onChange: function (v) { draft.tickerFields = v; } }),
+        onChange: apply('tickerFields') }),
       U.h('div', { 'class': 'row-btns' }, [el.installBtn, el.testBtn, el.uninstallBtn]),
       el.daemonStatus
     ]);
@@ -124,6 +140,9 @@
       if (!running) {
         el.daemonStatus.textContent = window.PalmServiceBridge ? 'Background service not installed' : 'Background service only runs on the TV';
         return;
+      }
+      if (el.notifSwitch && st.ticker && !el.notifSwitch.isEditing()) {
+        el.notifSwitch.setValues([{ value: false, label: 'Off' }, { value: true, label: 'On' }], !!st.ticker.enabled);
       }
       var p = st.price;
       el.daemonStatus.textContent = 'Running v' + st.version + (p ? '  \u00b7  last price ' + Math.round(p.buy) + 'c / ' + Math.round(p.sell) + 'c' : '') +
